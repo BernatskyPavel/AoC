@@ -1,106 +1,57 @@
+#![allow(dead_code)]
 fn main() {
-    part_one();
-    //part_two_2();
+    //part_one();
+    part_two();
     //println!("Hello, world!");
 }
 
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-
+ 
 fn part_one() {
-    let map = form_and_weigh_2("file.txt");
+    let map = form_and_weigh("file.txt");
     println!("{:?}", map.values().map(|value|{
         value.0
     }).sum::<u32>()); 
 }
 
 fn part_two() {
-    let mut map = form_and_weigh("file.txt");
-    // loop {
-    //     if me_step.eq(&String::from("COM"));
-    // };
-}
-
-fn part_two_2() {
-    let mut map: HashMap<String, Vec<(String, u32)>> = HashMap::new();
-    let file: File = File::open("file.txt").unwrap();
-    for line in BufReader::new(file).lines() {
-        let temp = line
-            .unwrap()
-            .split(")")
-            .map(|x| x.clone().to_string())
-            .collect::<Vec<String>>();
-        let entry = map.entry(temp[0].clone()).or_insert(Vec::new());
-        (*entry).push((temp[1].clone(), 0));
-    }
-    let mut orbits = 1;
-    let com = map.entry(String::from("COM")).or_default();
-    let mut next_step = (*com).clone();
-    for node in com {
-        node.1 = orbits;
-    }
+    let map = form_and_weigh("file.txt");
+    let mut me_path: Vec<String> = Vec::new();
+    let mut next_step = String::from("YOU");
     loop {
-        let mut temp: Vec<(String, u32)> = Vec::new();
-        orbits += 1;
-        next_step.iter().for_each(|x| {
-            let entry = map.entry(x.0.clone()).or_default();
-            for step in entry {
-                step.1 = orbits;
-                temp.push(step.clone());
-            }
-        });
-        next_step.clear();
-        next_step.append(&mut temp);
-        if next_step.is_empty() {
+        next_step = map.iter().find(|&p|{
+            p.1.1.contains(&next_step.clone())
+        }).unwrap().0.clone();
+        me_path.push(next_step.clone());
+        if next_step.eq("COM") {
             break;
         }
     }
-    println!("{:?}", map.values().map(|value|{
-        value.iter().map(|sub|{
-            sub.1
-        }).sum::<u32>()
-    }).sum::<u32>());    
-}
-
-fn form_and_weigh(path: &str) -> HashMap<String, Vec<(String, u32)>> {
-    let mut map: HashMap<String, Vec<(String, u32)>> = HashMap::new();
-    let file: File = File::open(path).unwrap();
-    for line in BufReader::new(file).lines() {
-        let temp = line
-            .unwrap()
-            .split(")")
-            .map(|x| x.clone().to_string())
-            .collect::<Vec<String>>();
-        let entry = map.entry(temp[0].clone()).or_insert(Vec::new());
-        (*entry).push((temp[1].clone(), 0));
-    }
-    let mut orbits = 1;
-    let com = map.entry(String::from("COM")).or_default();
-    let mut next_step = (*com).clone();
-    for node in com {
-        node.1 = orbits;
-    }
+    let mut san_path: Vec<String> = Vec::new();
+    next_step = String::from("SAN");
     loop {
-        let mut temp: Vec<(String, u32)> = Vec::new();
-        orbits += 1;
-        next_step.iter().for_each(|x| {
-            let entry = map.entry(x.0.clone()).or_default();
-            for step in entry {
-                step.1 = orbits;
-                temp.push(step.clone());
-            }
-        });
-        next_step.clear();
-        next_step.append(&mut temp);
-        if next_step.is_empty() {
+        next_step = map.iter().find(|&p|{
+            p.1.1.contains(&next_step.clone())
+        }).unwrap().0.clone();
+        san_path.push(next_step.clone());
+        if next_step.eq("COM") {
             break;
         }
     }
-    map  
+
+    loop {
+         if me_path.last() != san_path.last() {
+             break;
+         }
+         me_path.pop();
+         san_path.pop();
+     }
+    println!("{}", me_path.len() + san_path.len());
 }
 
-fn form_and_weigh_2(path: &str) -> HashMap<String, (u32, Vec<String>)> {
+fn form_and_weigh(path: &str) -> HashMap<String, (u32, Vec<String>)> {
     let mut map: HashMap<String, (u32, Vec<String>)> = HashMap::new();
     let file: File = File::open(path).unwrap();
     for line in BufReader::new(file).lines() {
@@ -133,6 +84,5 @@ fn form_and_weigh_2(path: &str) -> HashMap<String, (u32, Vec<String>)> {
             break;
         }
     }
-    println!("{:?}", map);
     map  
 }
