@@ -4,11 +4,12 @@
     // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "(Windows) Запустить",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/day_7/target/debug/day_7.exe",
+            "program": "${workspaceFolder}/day_9/target/debug/day_9.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
