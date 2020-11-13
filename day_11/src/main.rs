@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
-use std::io;
 use std::sync::{
     mpsc,
     mpsc::{Receiver, Sender},
+    Arc, Mutex,
 };
 use std::thread::Builder;
 
@@ -638,62 +638,42 @@ fn main() {
     part_one();
 }
 
-const UP: (isize, isize) = (1, 0);
-const DOWN: (isize, isize) = (-1, 0);
-const RIGHT: (isize, isize) = (0, 1);
-const LEFT: (isize, isize) = (0, -1);
-
 impl Direction {
     fn rotate(self, value: isize) -> Direction {
         match self {
-            Direction::Up => {
-                match value {
-                    0 => Direction::Left,
-                    1 => Direction::Right,
-                    _ => unreachable!(),
-                }
-            }
-            Direction::Down => {
-                match value {
-                    0 => Direction::Right,
-                    1 => Direction::Left,
-                    _ => unreachable!(),
-                }
-            }
-            Direction::Right => {
-                match value {
-                    0 => Direction::Up,
-                    1 => Direction::Down,
-                    _ => unreachable!(),
-                }
-            }
-            Direction::Left => {
-                match value {
-                    0 => Direction::Down,
-                    1 => Direction::Up,
-                    _ => unreachable!(),
-                }
-            }
+            Direction::Up => match value {
+                0 => Direction::Left,
+                1 => Direction::Right,
+                _ => unreachable!(),
+            },
+            Direction::Down => match value {
+                0 => Direction::Right,
+                1 => Direction::Left,
+                _ => unreachable!(),
+            },
+            Direction::Right => match value {
+                0 => Direction::Up,
+                1 => Direction::Down,
+                _ => unreachable!(),
+            },
+            Direction::Left => match value {
+                0 => Direction::Down,
+                1 => Direction::Up,
+                _ => unreachable!(),
+            },
         }
     }
     fn change_point(self, point: (isize, isize)) -> (isize, isize) {
         match self {
-            Direction::Up => {
-                (point.0, point.1 + 1)
-            },
-            Direction::Down => {
-                (point.0, point.1 - 1)
-            },
-            Direction::Right => {
-                (point.0 + 1, point.1)
-            },
-            Direction::Left => {
-                (point.0 - 1, point.1)
-            },
+            Direction::Up => (point.0, point.1 + 1),
+            Direction::Down => (point.0, point.1 - 1),
+            Direction::Right => (point.0 + 1, point.1),
+            Direction::Left => (point.0 - 1, point.1),
         }
     }
 }
 
+#[derive(Copy, Clone)]
 enum Direction {
     Up,
     Down,
@@ -704,30 +684,74 @@ enum Direction {
 fn part_one() {
     let (tx, rx_1) = mpsc::channel::<isize>();
     let (tx_1, rx) = mpsc::channel::<(isize, isize)>();
-
-    Builder::new()
-        .name("intcode".into())
-        .spawn(move || intcode(rx_1, tx_1, codes()))
-        .unwrap();
-
     let (black, white) = (0, 1);
     let mut points: BTreeMap<(isize, isize), isize> = BTreeMap::new();
-    let mut current_point = (0,0);
+    points.insert((0,0), white);
+    let mut _current_point = (0, 0);
     let mut current_direction = Direction::Up;
+    let temp = Arc::new(Mutex::new(points));
+    {
+        Builder::new()
+            .name("intcode".into())
+            .spawn(move || intcode(rx_1, tx_1, codes()))
+            .unwrap();
 
-    let result = Builder::new()
-        .name("rover".into())
-        .spawn(move || {
-            let mut pointer = points.entry(current_point).or_insert(black);
-            tx.send(*pointer).expect("Send error!");
-            let step = rx.recv().expect("Recieve error!");
-            *pointer = step.0;
-            current_direction = current_direction.rotate(step.1);
-            current_direction.change_point(current_point);
-            return 0;
-        })
-        .unwrap();
-    println!("{:?}", result);
+        let temp = Arc::clone(&temp);
+        Builder::new()
+            .name("rover".into())
+            .spawn(move || {
+                let mut mutex = temp.lock().unwrap();
+
+                loop {
+                    let mut _pointer = mutex.entry(_current_point).or_insert(black);
+                    tx.send(*_pointer).expect("Send error!");
+                    let step = rx.recv().expect("Recieve error!");
+                    if step == (-1, -1) {
+                        break;
+                    }
+                    *_pointer = step.0;
+                    current_direction = current_direction.rotate(step.1);
+                    _current_point = current_direction.change_point(_current_point);
+                }
+            })
+            .unwrap()
+            .join()
+            .expect("x");
+    }
+    
+    let result = temp.lock().unwrap();
+    let (mut left,mut right, mut up, mut down) = (0,0,0,0);
+    result.iter().for_each(|x| {
+        if x.0.0 < left {
+            left = x.0.0;
+        }
+        if x.0.0 > right {
+            right = x.0.0;
+        }
+        if x.0.1 < down {
+            down = x.0.1;
+        }
+        if x.0.1 > up {
+            up = x.0.1;
+        }
+    });
+    let (diff_x, diff_y) = (left.abs() + right.abs(), up.abs() + down.abs());
+    let mut logo: BTreeMap<usize, BTreeMap<usize, usize>> = BTreeMap::new();
+    result.iter().for_each(|point| {
+        let x = (point.0.0 + left.abs()) as usize;
+        let y = (point.0.1 + down.abs()) as usize;
+        logo.entry(y).or_insert(BTreeMap::new()).entry(x).or_insert(*point.1 as usize);
+    });
+    for y in 0..=diff_y {
+        for x in 0..=diff_x {
+            logo.entry(y as usize).or_insert(BTreeMap::new()).entry(x as usize).or_insert(1);
+        }
+    }
+    let mut logo_v = logo.values().map(|x|{
+        x.values().map(|val| val.to_string()).collect::<Vec<String>>().join("")
+    }).collect::<Vec<String>>();
+    logo_v.reverse();
+    println!("{}", logo_v.join("\n"));
 }
 #[derive(Debug)]
 enum Opcode {
@@ -783,7 +807,6 @@ fn intcode(rx: Receiver<isize>, tx: Sender<(isize, isize)>, code: Vec<&isize>) {
                 },
             ),
         };
-        // println!("{:?}-{:?}", opcode, params);
         match opcode.0 {
             Opcode::Sum(step) => {
                 *codes.entry(params.2 as usize).or_insert(0) =
@@ -798,16 +821,6 @@ fn intcode(rx: Receiver<isize>, tx: Sender<(isize, isize)>, code: Vec<&isize>) {
                 i += step;
             }
             Opcode::Input(step) => {
-                /* let mut input = String::new();
-                println!("Input:");
-                io::stdin()
-                    .read_line(&mut input)
-                    .expect("Failed to read line");
-
-                let input: isize = match input.trim().parse() {
-                    Ok(num) => num,
-                    Err(_) => break,
-                };*/
                 *codes.entry(params.0 as usize).or_insert(0) = rx.recv().expect("Receive error!");
                 i += step;
             }
@@ -819,10 +832,10 @@ fn intcode(rx: Receiver<isize>, tx: Sender<(isize, isize)>, code: Vec<&isize>) {
                     tx.send(output).expect("Sending error!");
                 }
                 is_paired = !is_paired;
-                //println!("Code: {}", *codes.entry(params.0 as usize).or_insert(0));
                 i += step;
             }
             Opcode::Halt(_) => {
+                tx.send((-1,-1)).expect("Sending error!");
                 break;
             }
             Opcode::JumpT(step) => {
