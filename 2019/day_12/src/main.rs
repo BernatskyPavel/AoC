@@ -220,7 +220,7 @@ fn part_two() {
                 }
             });
         }
-        if moons_counter == 1 {
+        if moons_counter >= 2 {
             break;
         }
         /*if moons_return_iterations.iter().all(|pos| *pos != 0) {
