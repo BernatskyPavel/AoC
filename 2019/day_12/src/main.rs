@@ -1,5 +1,5 @@
-use std::time::Instant;
 use itertools::Itertools;
+use std::time::Instant;
 
 fn main() {
     let start = Instant::now();
@@ -139,16 +139,23 @@ fn part_two() {
     let combinations = combinations
         .map(|combination| (**combination.get(0).unwrap(), **combination.get(1).unwrap()))
         .collect::<Vec<(usize, usize)>>();
-    let mut moons: [Moon; 4] = [
+    /*let mut moons: [Moon; 4] = [
         Moon::new(-1, 0, 2),
         Moon::new(2, -10, -7),
         Moon::new(4, -8, 8),
         Moon::new(3, 5, -1),
+    ];*/
+    let mut moons: [Moon; 4] = [
+        Moon::new(-8, -10, 0),
+        Moon::new(5, 5, 10),
+        Moon::new(2, -7, 3),
+        Moon::new(9, -8, -3),
     ];
-
     let init_state = moons.clone();
     let mut iteration: usize = 0;
-
+    let mut moons_return_iterations = [0, 0, 0, 0];
+    let mut moons_counter = 0;
+    let mut step = 1;
     loop {
         combinations.iter().for_each(|&comb| {
             match moons[comb.0]
@@ -160,12 +167,12 @@ fn part_two() {
                 std::cmp::Ordering::Less => {
                     moons[comb.0].velocity.x += 1;
                     moons[comb.1].velocity.x -= 1;
-                }
-                std::cmp::Ordering::Equal => {}
+                },
                 std::cmp::Ordering::Greater => {
                     moons[comb.0].velocity.x -= 1;
                     moons[comb.1].velocity.x += 1;
-                }
+                },
+                std::cmp::Ordering::Equal => {},
             };
             match moons[comb.0]
                 .position
@@ -176,12 +183,12 @@ fn part_two() {
                 std::cmp::Ordering::Less => {
                     moons[comb.0].velocity.y += 1;
                     moons[comb.1].velocity.y -= 1;
-                }
-                std::cmp::Ordering::Equal => {}
+                },
                 std::cmp::Ordering::Greater => {
                     moons[comb.0].velocity.y -= 1;
                     moons[comb.1].velocity.y += 1;
-                }
+                },
+                std::cmp::Ordering::Equal => {},
             };
             match moons[comb.0]
                 .position
@@ -192,27 +199,48 @@ fn part_two() {
                 std::cmp::Ordering::Less => {
                     moons[comb.0].velocity.z += 1;
                     moons[comb.1].velocity.z -= 1;
-                }
-                std::cmp::Ordering::Equal => {}
+                },
                 std::cmp::Ordering::Greater => {
                     moons[comb.0].velocity.z -= 1;
                     moons[comb.1].velocity.z += 1;
-                }
+                },
+                std::cmp::Ordering::Equal => {},
             };
         });
         moons.iter_mut().for_each(|moon| moon.add_velocity());
         iteration += 1;
-        if moons
-            .iter()
-            .enumerate()
-            .all(|moon| moon.1.equal(init_state[moon.0]))
-        {
+        if iteration % step == 0 {
+            moons.iter().enumerate().for_each(|moon| {
+                if moons_return_iterations[moon.0] == 0 {
+                    if moon.1.equal(init_state[moon.0]) {
+                        moons_return_iterations[moon.0] = iteration;
+                        step = lcm(step, iteration);
+                        moons_counter += 1;
+                    }
+                }
+            });
+        }
+        if moons_counter == 1 {
             break;
         }
-
+        /*if moons_return_iterations.iter().all(|pos| *pos != 0) {
+            break;
+        }*/
         //println!("{:?}", moons);
     }
-    println!("{}", iteration);
+    println!("{:?}", moons_return_iterations);
 
     //println!("{:?}", moons);
+}
+
+fn gcd(a: usize, b: usize) -> usize {
+    if b != 0 {
+        gcd(b, a % b)
+    } else {
+        a
+    }
+}
+
+fn lcm(a: usize, b: usize) -> usize {
+    a * b / gcd(a, b)
 }
