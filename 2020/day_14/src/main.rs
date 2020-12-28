@@ -3,25 +3,29 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 fn main() {
-    println!("Hello, world!");
     let data = extract_from_file("input.txt");
-    println!("{}", part_one());
-    println!("{}", part_two());
+    println!("{}", part_one(&data));
+    println!("{}", part_two(&data));
 }
 
-fn part_one() -> isize {
-    0
+fn part_one(operations: &Vec<Cmd>) -> usize {
+    let mut app: App = App::new(&operations);
+    app.process();
+    app.get_memory_sum()
 }
 
-fn part_two() -> isize {
-    0
+fn part_two(operations: &Vec<Cmd>) -> usize {
+    let mut app: App = App::new(&operations);
+    app.switch_version();
+    app.process();
+    app.get_memory_sum()
 }
 
 #[macro_use]
 extern crate lazy_static;
 use regex::Regex;
 
-fn extract_from_file(file: &str) -> (usize, Vec<(usize, usize)>) {
+fn extract_from_file(file: &str) -> Vec<Cmd> {
     lazy_static! {
         static ref MASK: Regex = Regex::new("mask = (?P<mask>[X01]{36})").unwrap();
         static ref WRITE: Regex =
@@ -29,29 +33,30 @@ fn extract_from_file(file: &str) -> (usize, Vec<(usize, usize)>) {
     }
     let file: File = File::open(file).unwrap();
     let mut error_counter = 0;
-    let mut timestamp: usize = 0;
-    let mut buses: Vec<(usize, usize)> = Vec::new();
-    for line in BufReader::new(file).lines().enumerate() {
-        let string = line.1.unwrap();
-        match line.0 {
-            0 => {
-                let option_timestamp = string.parse::<usize>();
-                if option_timestamp.is_err() {
+    let mut ops: Vec<Cmd> = Vec::new();
+    for line in BufReader::new(file).lines() {
+        let string = line.unwrap();
+        let is_mask = MASK.is_match(string.as_str());
+        if is_mask {
+            let code = MASK.captures(string.as_str()).unwrap();
+            ops.push(Cmd::SetMask(String::from(
+                code.name("mask").unwrap().as_str(),
+            )));
+        } else {
+            let is_write = WRITE.is_match(string.as_str());
+            if is_write {
+                let code = WRITE.captures(string.as_str()).unwrap();
+                let option_address = code.name("address").unwrap().as_str().parse::<usize>();
+                let option_value = code.name("value").unwrap().as_str().parse::<usize>();
+                if option_address.is_err() || option_value.is_err() {
                     error_counter += 1;
                     continue;
                 } else {
-                    timestamp = option_timestamp.unwrap();
+                    ops.push(Cmd::Write(option_address.unwrap(), option_value.unwrap()));
                 }
+            } else {
+                error_counter += 1;
             }
-            1 => {
-                buses = string
-                    .split(",")
-                    .enumerate()
-                    .filter(|bus| bus.1.parse::<usize>().is_ok())
-                    .map(|bus| (bus.0, bus.1.parse::<usize>().unwrap()))
-                    .collect();
-            }
-            _ => unimplemented!(),
         }
     }
     if error_counter != 0 {
@@ -62,5 +67,5 @@ fn extract_from_file(file: &str) -> (usize, Vec<(usize, usize)>) {
     } else {
         println!("File parsed with no errors!");
     };
-    (timestamp, buses)
+    ops
 }
