@@ -1,8 +1,8 @@
 [package]
-name = "day_08"
+name = "day_14"
 version = "0.1.0"
-authors = ["Bernatsky Pavel <pasha.desh@yandex.by>"]
 edition = "2021"
+authors = ["Bernatsky Pavel <pasha.desh@yandex.by>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

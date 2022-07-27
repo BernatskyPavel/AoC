@@ -6,13 +6,12 @@ extern crate lazy_static;
 use regex::Regex;
 
 fn main() {
-    println!("Hello, world!");
-    part_one();
-    part_two();
+    println!("Part one: {}", part_one("input.txt"));
+    println!("Part two: {}", part_two("input.txt"));
 }
 
-fn part_one() {
-    let file: File = File::open("input.txt").unwrap();
+fn part_one(path: &str) -> usize {
+    let file: File = File::open(path).unwrap();
     lazy_static! {
         static ref RE: Regex = Regex::new("\\\\x[0-9A-Fa-f]{2}").unwrap();
     }
@@ -27,19 +26,19 @@ fn part_one() {
         string = string.replace("\\\"", "$");
         memory_length += string.len() - 2;
     }
-    println!("{}", code_length - memory_length);
+    code_length - memory_length
 }
 
-fn part_two() {
-    let file: File = File::open("input.txt").unwrap();
+fn part_two(path: &str) -> usize {
+    let file: File = File::open(path).unwrap();
     let mut code_length = 0;
     let mut memory_length = 0;
     for line in BufReader::new(file).lines() {
         let mut string = line.unwrap();
         code_length += string.len();
-        string = string.replace("\\", "\\\\");
-        string = string.replace("\"", "\\\"");
+        string = string.replace('\\', "\\\\");
+        string = string.replace('\"', "\\\"");
         memory_length += string.len() + 2;
     }
-    println!("{}", memory_length - code_length);
+    memory_length - code_length
 }

@@ -1,23 +1,20 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-//use std::collections::BTreeSet;
 
 fn main() {
-    println!("Hello, world!");
-    println!("{}", part_one());
-    println!("{}", part_two());
+    println!("Part one: {}", part_one("input.txt"));
+    println!("Part two: {}", part_two("input.txt"));
 }
 
-fn part_one() -> usize {
-    let file: File = File::open("input.txt").unwrap();
+fn part_one(path: &str) -> usize {
+    let file: File = File::open(path).unwrap();
     let mut result = 0;
     let bad_strings = ["ab", "cd", "pq", "xy"];
     for line in BufReader::new(file).lines() {
         let mut is_twice = false;
         let mut is_bad = false;
         let string = line.unwrap();
-        let vowels: Vec<_> = string.matches(|ch| "aeiou".contains(ch)).collect();
-        if vowels.len() < 3 {
+        if string.matches(|ch| "aeiou".contains(ch)).count() < 3 {
             continue;
         }
         string
@@ -46,8 +43,8 @@ fn part_one() -> usize {
 
 use std::collections::BTreeSet;
 
-fn part_two() -> usize {
-    let file: File = File::open("input.txt").unwrap();
+fn part_two(path: &str) -> usize {
+    let file: File = File::open(path).unwrap();
     let mut result = 0;
     for line in BufReader::new(file).lines() {
         let string = line.unwrap();
@@ -60,12 +57,11 @@ fn part_two() -> usize {
         }
         let mut pairs: BTreeSet<String> = BTreeSet::new();
         chars.windows(2).for_each(|win| {
-            let temp = format!("{}{}", win[0], win[1]);
-            pairs.insert(temp.clone());
+            pairs.insert(format!("{}{}", win[0], win[1]));
         });
-        let mut first_rule = pairs.iter().skip_while(|pair|
-            string.matches(*pair).collect::<Vec<_>>().len() < 2
-        );
+        let mut first_rule = pairs
+            .iter()
+            .skip_while(|pair| string.matches(*pair).count() < 2);
         if first_rule.next().is_some() {
             result += 1;
         };

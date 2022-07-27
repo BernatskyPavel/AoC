@@ -2,14 +2,13 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 fn main() {
-    println!("Hello, world!");
-    part_one();
-    part_two();
+    println!("Part one: {}", part_one("input.txt"));
+    println!("Part two: {}", part_two("input.txt"));
 }
 
-fn part_one() {
+fn part_one(path: &str) -> usize {
     let mut lights = vec![vec![false; 1000]; 1000];
-    let file: File = File::open("input.txt").unwrap();
+    let file: File = File::open(path).unwrap();
     for line in BufReader::new(file).lines() {
         let string = line.unwrap();
         let parts = string.split_whitespace().collect::<Vec<&str>>();
@@ -19,60 +18,46 @@ fn part_one() {
                 match parts[1] {
                     "on" => {
                         new_state = true;
-                    },
+                    }
                     "off" => {
                         new_state = false;
-                    },
+                    }
                     _ => {
                         unimplemented!();
-                    },
+                    }
                 }
-                let mut lu_point = (0,0);
-                let mut rb_point = (0,0);
-                let lu_coords = parts[2].split(',').collect::<Vec<&str>>();
-                lu_point.0 = lu_coords[0].parse::<usize>().unwrap();
-                lu_point.1 = lu_coords[1].parse::<usize>().unwrap();
-                let rb_coords = parts[4].split(',').collect::<Vec<&str>>();
-                rb_point.0 = rb_coords[0].parse::<usize>().unwrap();
-                rb_point.1 = rb_coords[1].parse::<usize>().unwrap();
-                (lu_point.0..=rb_point.0).for_each(|x|{
-                    (lu_point.1..=rb_point.1).for_each(|y|{
+                let points = parse_points(parts[2], parts[4]);
+                (points[0].0..=points[0].1).for_each(|x| {
+                    (points[1].0..=points[1].1).for_each(|y| {
                         lights[x][y] = new_state;
                     });
                 });
-            },
+            }
             "toggle" => {
-                let mut lu_point = (0,0);
-                let mut rb_point = (0,0);
-                let lu_coords = parts[1].split(',').collect::<Vec<&str>>();
-                lu_point.0 = lu_coords[0].parse::<usize>().unwrap();
-                lu_point.1 = lu_coords[1].parse::<usize>().unwrap();
-                let rb_coords = parts[3].split(',').collect::<Vec<&str>>();
-                rb_point.0 = rb_coords[0].parse::<usize>().unwrap();
-                rb_point.1 = rb_coords[1].parse::<usize>().unwrap();
-                (lu_point.0..=rb_point.0).for_each(|x|{
-                    (lu_point.1..=rb_point.1).for_each(|y|{
+                let points = parse_points(parts[1], parts[3]);
+                (points[0].0..=points[0].1).for_each(|x| {
+                    (points[1].0..=points[1].1).for_each(|y| {
                         lights[x][y] = !lights[x][y];
                     });
                 });
-            },
-            _ => {},
+            }
+            _ => {}
         };
     }
     let mut lit_counter = 0;
-    lights.iter().for_each(|row|{
-        row.iter().for_each(|&light|{
+    lights.iter().for_each(|row| {
+        row.iter().for_each(|&light| {
             if light {
                 lit_counter += 1;
             }
         })
     });
-    println!("{}", lit_counter);
+    lit_counter
 }
 
-fn part_two() {
+fn part_two(path: &str) -> usize {
     let mut lights = vec![vec![0_usize; 1000]; 1000];
-    let file: File = File::open("input.txt").unwrap();
+    let file: File = File::open(path).unwrap();
     for line in BufReader::new(file).lines() {
         let string = line.unwrap();
         let parts = string.split_whitespace().collect::<Vec<&str>>();
@@ -82,54 +67,52 @@ fn part_two() {
                 match parts[1] {
                     "on" => {
                         new_state = true;
-                    },
+                    }
                     "off" => {
                         new_state = false;
-                    },
+                    }
                     _ => {
                         unimplemented!();
-                    },
+                    }
                 }
-                let mut lu_point = (0,0);
-                let mut rb_point = (0,0);
-                let lu_coords = parts[2].split(',').collect::<Vec<&str>>();
-                lu_point.0 = lu_coords[0].parse::<usize>().unwrap();
-                lu_point.1 = lu_coords[1].parse::<usize>().unwrap();
-                let rb_coords = parts[4].split(',').collect::<Vec<&str>>();
-                rb_point.0 = rb_coords[0].parse::<usize>().unwrap();
-                rb_point.1 = rb_coords[1].parse::<usize>().unwrap();
-                (lu_point.0..=rb_point.0).for_each(|x|{
-                    (lu_point.1..=rb_point.1).for_each(|y|{
+                let points = parse_points(parts[2], parts[4]);
+                (points[0].0..=points[0].1).for_each(|x| {
+                    (points[1].0..=points[1].1).for_each(|y| {
                         if new_state {
                             lights[x][y] = lights[x][y].saturating_add(1);
                         } else {
                             lights[x][y] = lights[x][y].saturating_sub(1);
                         }
-                        
                     });
                 });
-            },
+            }
             "toggle" => {
-                let mut lu_point = (0,0);
-                let mut rb_point = (0,0);
-                let lu_coords = parts[1].split(',').collect::<Vec<&str>>();
-                lu_point.0 = lu_coords[0].parse::<usize>().unwrap();
-                lu_point.1 = lu_coords[1].parse::<usize>().unwrap();
-                let rb_coords = parts[3].split(',').collect::<Vec<&str>>();
-                rb_point.0 = rb_coords[0].parse::<usize>().unwrap();
-                rb_point.1 = rb_coords[1].parse::<usize>().unwrap();
-                (lu_point.0..=rb_point.0).for_each(|x|{
-                    (lu_point.1..=rb_point.1).for_each(|y|{
+                let points = parse_points(parts[1], parts[3]);
+                (points[0].0..=points[0].1).for_each(|x| {
+                    (points[1].0..=points[1].1).for_each(|y| {
                         lights[x][y] = lights[x][y].saturating_add(2);
                     });
                 });
-            },
-            _ => {},
+            }
+            _ => {}
         };
     }
-    let lit_counter =
-    lights.iter().map(|row|{
-        row.iter().sum::<usize>()
-    }).sum::<usize>();
-    println!("{}", lit_counter);
+    let lit_counter = lights
+        .iter()
+        .map(|row| row.iter().sum::<usize>())
+        .sum::<usize>();
+    lit_counter
+}
+
+fn parse_points(lu_point: &str, rb_point: &str) -> Vec<(usize, usize)> {
+    lu_point
+        .split(',')
+        .zip(rb_point.split(','))
+        .map(|part| {
+            (
+                part.0.parse::<usize>().unwrap(),
+                part.1.parse::<usize>().unwrap(),
+            )
+        })
+        .collect::<Vec<_>>()
 }

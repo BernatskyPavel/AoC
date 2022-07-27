@@ -6,14 +6,13 @@ extern crate lazy_static;
 use regex::Regex;
 
 fn main() {
-    println!("Hello, world!");
-    let sum_all = part_one();
-    println!("{}", sum_all);
-    println!("{}", sum_all - part_two());
+    let sum_all = part_one("input.txt");
+    println!("Part one: {}", sum_all);
+    println!("Part two: {}", sum_all - part_two("input.txt"));
 }
 
-fn part_one() -> isize {
-    let file: File = File::open("input.txt").unwrap();
+fn part_one(path: &str) -> isize {
+    let file: File = File::open(path).unwrap();
     lazy_static! {
         static ref RE: Regex = Regex::new("(?P<number>[-]*[1-9][0-9]*)").unwrap();
     }
@@ -27,8 +26,8 @@ fn part_one() -> isize {
     sum
 }
 
-fn part_two() -> isize {
-    let file: File = File::open("input.txt").unwrap();
+fn part_two(path: &str) -> isize {
+    let file: File = File::open(path).unwrap();
     lazy_static! {
         static ref RE: Regex = Regex::new("(?P<number>[-]*[1-9][0-9]*)").unwrap();
         static ref RED: Regex = Regex::new(":\"red\"").unwrap();
@@ -52,17 +51,19 @@ fn part_two() -> isize {
             }
             _ => {}
         });
-        if objects.len() > 0 {
-           // println!("{:?}", objects);
+        if !objects.is_empty() {
             let mut blocked_objects: Vec<(usize, usize)> = Vec::new();
             RED.find_iter(string.as_str()).for_each(|red| {
-                //println!("{:?}-{}", red.start(), red.end());
                 let mut temp = objects
                     .iter()
                     .filter(|object| red.start() > object.0 && red.end() <= object.1)
                     .collect::<Vec<&(usize, usize)>>();
                 if temp.len() > 1 {
-                    temp.sort_by(|a, b| (red.start().saturating_sub(a.0)).partial_cmp(&(red.start().saturating_sub(b.0))).unwrap());
+                    temp.sort_by(|a, b| {
+                        (red.start().saturating_sub(a.0))
+                            .partial_cmp(&(red.start().saturating_sub(b.0)))
+                            .unwrap()
+                    });
                 }
                 if !blocked_objects
                     .iter()
@@ -80,14 +81,10 @@ fn part_two() -> isize {
                     }
                     blocked_objects.push(*temp[0]);
                 }
-
-               // println!("{:?}", temp[0]);
             });
-           // println!("{:?}", blocked_objects);
 
             blocked_objects.iter().for_each(|object| {
                 let object_string = string.get(object.0..=object.1).unwrap();
-                //println!("{:?}", object_string);
                 RE.captures_iter(object_string).for_each(|cap| {
                     sum += cap["number"].parse::<isize>().unwrap();
                 });

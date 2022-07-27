@@ -9,12 +9,12 @@ use itertools::Itertools;
 use regex::Regex;
 
 fn main() {
-    println!("Hello, world!");
-    part_one();
+    let res = part_one("input.txt");
+    println!("Part one: {}\nPart two: {}", res.0, res.1)
 }
 
-fn part_one() {
-    let file: File = File::open("input.txt").unwrap();
+fn part_one(path: &str) -> (usize, usize) {
+    let file: File = File::open(path).unwrap();
     lazy_static! {
         static ref RE: Regex =
             Regex::new("(?P<from>[A-Za-z]+) to (?P<to>[A-Za-z]+) = (?P<dist>[1-9][0-9]*)").unwrap();
@@ -51,12 +51,9 @@ fn part_one() {
                     .unwrap();
             }
         });
-        if min_distance > path_lenght {
-            min_distance = path_lenght;
-        }
-        if max_distance < path_lenght {
-            max_distance = path_lenght;
-        }
+
+        min_distance = path_lenght.min(min_distance);
+        max_distance = path_lenght.max(max_distance);
     });
-    println!("{}-{}", min_distance, max_distance);
+    (min_distance, max_distance)
 }

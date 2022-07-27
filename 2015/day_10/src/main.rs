@@ -1,15 +1,16 @@
 fn main() {
-    println!("Hello, world!");
-    part_one(String::from("1113222113"), 50);
+    let input = "1113222113";
+    println!("Part one: {}", part_one(input, 40));
+    println!("Part two: {}", part_one(input, 50));
 }
 
-fn part_one(input: String, iterations: usize) {
-    let mut result = input;
+fn part_one(input: &str, iterations: usize) -> usize {
+    let mut result = String::from(input);
     (0..iterations).for_each(|_| {
         let mut temp: String = String::new();
-        let mut prev = result.chars().nth(0).unwrap();
+        let mut prev = result.chars().next().unwrap();
         let mut counter = 0;
-        result.chars().for_each(|ch|{
+        result.chars().for_each(|ch| {
             if ch == prev {
                 counter += 1;
             } else {
@@ -23,5 +24,5 @@ fn part_one(input: String, iterations: usize) {
         temp.push(prev);
         result = temp.clone();
     });
-    println!("{}", result.len());
+    result.len()
 }

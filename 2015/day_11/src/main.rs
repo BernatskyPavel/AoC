@@ -1,10 +1,9 @@
 use std::collections::BTreeSet;
 
 fn main() {
-    println!("Hello, world!");
     let pass = part_one(String::from("cqjxjnds"));
-    println!("{}", pass);
-    println!("{}", part_one(pass));
+    println!("Part one: {}", pass);
+    println!("Part two: {}", part_one(pass));
 }
 
 struct Password {
@@ -45,14 +44,11 @@ impl Password {
     }
 
     fn is_valid(&self) -> bool {
-        let mut is_valid;
-        is_valid = self.symbols.windows(3).any(|window| {
+        let mut is_valid = self.symbols.windows(3).any(|window| {
             window[0] as u8 == (window[1] as u8 - 1) && window[1] as u8 == (window[2] as u8 - 1)
         });
         if is_valid {
-            is_valid = self.symbols.iter().all(|ch|{
-                !"iol".contains(*ch)
-            });
+            is_valid = self.symbols.iter().all(|ch| !"iol".contains(*ch));
         }
         if is_valid {
             let pairs = self
@@ -73,18 +69,13 @@ impl Password {
 }
 
 fn part_one(old_password: String) -> String {
-    let password = Password::new(old_password);
-    let mut new_password: Password;
-    if password.is_none() {
-        unimplemented!();
-    } else {
-        new_password = password.unwrap();
-        loop {
+    if let Some(mut new_password) = Password::new(old_password) {
+        new_password.increment_password();
+        while !new_password.is_valid() {
             new_password.increment_password();
-            if new_password.is_valid() {
-                break;
-            }
         }
+        new_password.get_password()
+    } else {
+        String::new()
     }
-    new_password.get_password()
 }
